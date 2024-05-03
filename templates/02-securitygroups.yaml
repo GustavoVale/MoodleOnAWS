@@ -9,12 +9,20 @@ Metadata:
     - Label:
         default: AWS Parameters
       Parameters:
+        - SshAccessCidr
         - Vpc
     ParameterLabels:
+      SshAccessCidr:
+        default: SSH Access From
       Vpc:
         default: Vpc Id
 
 Parameters:
+  SshAccessCidr:
+    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$
+    Description: The CIDR IP range that is permitted to SSH to bastion instance. Note - a value of 0.0.0.0/0 will allow access from ANY IP address.
+    Type: String
+    Default: 0.0.0.0/0
   Vpc:
     AllowedPattern: ^(vpc-)([a-z0-9]{8}|[a-z0-9]{17})$
     Description: VPC Id of an existing VPC.
@@ -26,7 +34,7 @@ Parameters:
     Default: PostgreSQL
     Description: Indicates whether to use Aurora MySQL or PostgreSQL.
     Type: String
-      ElastiCacheType:
+  ElastiCacheType:
     AllowedValues:
       - Redis
       - Memcached
@@ -36,7 +44,7 @@ Parameters:
 
 Conditions:
   UsePostgreSQL:
-    !Equals [!Ref DatabaseType, PostgreSQL]
+    !Equals [!Ref DatabaseType, PostgreSQL]  
   UseRedis:
     !Equals [!Ref ElastiCacheType, Redis]
 Resources:
@@ -68,9 +76,9 @@ Resources:
           ToPort: !If [ UseRedis, 6379, 11211 ]
           SourceSecurityGroupId: !Ref WebSecurityGroup
       SecurityGroupEgress:
-      - IpProtocol: -1
-        Description: "Block all egress"
-        CidrIp: 127.0.0.1/32
+        - IpProtocol: -1
+          Description: "Block all egress"
+          CidrIp: 127.0.0.1/32
       VpcId:
         !Ref Vpc
   EfsSecurityGroup:
@@ -116,11 +124,11 @@ Resources:
           ToPort: 80
           CidrIp: 0.0.0.0/0
       SecurityGroupEgress:
-      - IpProtocol: -1
-        Description: "Block all egress"
-        CidrIp: 127.0.0.1/32
+        - IpProtocol: -1
+          Description: "Block all egress"
+          CidrIp: 127.0.0.1/32
       VpcId:
-        !Ref Vpc  
+        !Ref Vpc
   PublicAlbSecurityGroupEgressHttp:
     Type: AWS::EC2::SecurityGroupEgress
     Properties:
@@ -139,7 +147,7 @@ Resources:
       FromPort: 443
       ToPort: 443
       DestinationSecurityGroupId: !GetAtt WebSecurityGroup.GroupId
-      GroupId: !GetAtt PublicAlbSecurityGroup.GroupId     
+      GroupId: !GetAtt PublicAlbSecurityGroup.GroupId
 
   WebSecurityGroup:
     Type: AWS::EC2::SecurityGroup
