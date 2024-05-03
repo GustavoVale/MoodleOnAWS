@@ -1,6 +1,7 @@
 ---
 AWSTemplateFormatVersion: 2010-09-09
-Description: Moodle EFS shared file system
+
+Description: Setting up EFS File System and Target mount points for each subnet
 
 Parameters:
   Cmk:
@@ -52,7 +53,6 @@ Resources:
       KmsKeyId: !If [ UseAWS-ManagedCMK, !Ref 'AWS::NoValue', !Ref Cmk ]
       PerformanceMode: generalPurpose
       ThroughputMode: elastic
-
   ElasticFileSystemMountTarget0:
     Condition: Subnet0
     Type: AWS::EFS::MountTarget
@@ -61,7 +61,6 @@ Resources:
       SecurityGroups:
       - !Ref SecurityGroup
       SubnetId: !Select [ 0, !Ref Subnet ]
-
   ElasticFileSystemMountTarget1:
     Condition: Subnet1
     Type: AWS::EFS::MountTarget
@@ -70,7 +69,6 @@ Resources:
       SecurityGroups:
       - !Ref SecurityGroup
       SubnetId: !Select [ 1, !Ref Subnet ]
-
   ElasticFileSystemMountTarget2:
     Condition: Subnet2
     Type: AWS::EFS::MountTarget
@@ -79,7 +77,6 @@ Resources:
       SecurityGroups:
       - !Ref SecurityGroup
       SubnetId: !Select [ 2, !Ref Subnet ]
-
   ElasticFileSystemParam:
     Type: AWS::SSM::Parameter
     Properties:

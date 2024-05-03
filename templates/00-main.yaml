@@ -10,6 +10,7 @@ Metadata:
         default: General AWS
       Parameters:
         - DeploymentLocation
+        - EC2KeyName
         - HostedZoneName
         - DomainName
         - NotifyEmailAddress
@@ -73,7 +74,7 @@ Metadata:
       CloudFrontAcmCertificate:
         default: CloudFront Certificate ARN
       DatabaseCmk:
-        default: AWS KMS CMK for RDS 
+        default: AWS KMS CMK for RDS
       DatabaseUseServerless:
         default: Should the database use Serverless engines?
       DatabaseMinCapacity:
@@ -87,7 +88,7 @@ Metadata:
       DatabaseName:
         default: DB Name
       SharedStorageEncryptionCmk:
-        default: (Optional) Shared File Storage Encryption Key ARN (AWS KMS CMK) 
+        default: (Optional) Shared File Storage Encryption Key ARN (AWS KMS CMK)
       PublicAlbAcmCertificate:
         default: ALB Certificate ARN
       UseApplicationCacheBoolean:
@@ -134,6 +135,8 @@ Metadata:
         default: Data Subnet 1
       DataSubnet2Cidr:
         default: Data Subnet 2
+      EC2KeyName:
+        default: EC2 Key Pair
       NotifyEmailAddress:
         default: Email address for any notification
       UseCloudFrontBoolean:
@@ -504,7 +507,7 @@ Parameters:
       - m7g.4xlarge
       - m7g.8xlarge
       - m7g.12xlarge
-      - m7g.16xlarge
+      - m7g.16xlarge  
       - c6g.large 
       - c6g.xlarge 
       - c6g.2xlarge 
@@ -546,7 +549,8 @@ Parameters:
     Type: String
     Default: pt_br
   AvailabilityZones:
-    Description: 'List of Availability Zones to use for the subnets in the VPC. Note: The logical order is preserved.'
+    Description: 'List of Availability Zones to use for the subnets in the VPC. Note:
+      The logical order is preserved.'
     Type: List<AWS::EC2::AvailabilityZone::Name>
   NumberOfAZs:
     AllowedValues:
@@ -624,6 +628,10 @@ Parameters:
     Default: false
     Description: Specifies whether a CloudFront Distribution should be created to serve the Moodle website content.
     Type: String
+  EC2KeyName:
+    ConstraintDescription: Must be letters (upper or lower), numbers, and special characters.
+    Description: Name of an EC2 KeyPair. Your Web instances will launch with this KeyPair.
+    Type: AWS::EC2::KeyPair::KeyName
   NotifyEmailAddress:
     AllowedPattern: ^[a-zA-Z0-9+_.-]+@[a-zA-Z0-9.-]+$
     Description: Email address for notification
@@ -878,6 +886,8 @@ Resources:
     Type: AWS::CloudFormation::Stack
     Properties:
       Parameters:
+        EC2KeyName:
+          !Ref EC2KeyName
         PipelineSecurityGroup:
          !GetAtt [ securitygroups, Outputs.WebSecurityGroup ]
         NumberOfSubnets:
@@ -925,13 +935,12 @@ Resources:
         CacheEngineType: !Ref CacheEngineType
         CacheUsageType: 'application'
         Subnet: !GetAtt [ vpc, Outputs.DataSubnet ]
-        ElastiCacheClusterName:  !Sub '${AWS::StackName}application'
+        ElastiCacheClusterName: !Sub '${AWS::StackName}application'
         ElastiCacheNodeType: !Ref ApplicationCacheNodeType
         ElastiCacheSecurityGroup: !GetAtt [ securitygroups, Outputs.ElastiCacheSecurityGroup ]
         NumberOfSubnets: !Ref NumberOfAZs
         ProjectName: !Sub '${AWS::StackName}'
       TemplateURL: !If [ DeployWithServerlessApplicationCache, !Sub '${DeploymentLocation}/03-elasticacheserverless.yaml', !Sub '${DeploymentLocation}/03-elasticache.yaml' ]
-
   webapp:
     DependsOn: [ publicalb, pipelineHelper ]
     Type: AWS::CloudFormation::Stack
@@ -939,6 +948,8 @@ Resources:
       Parameters:
         RDSInstanceSecretArn:
           !Ref rdsInstanceSecret
+        EC2KeyName:
+          !Ref EC2KeyName
         NumberOfSubnets:
           !Ref NumberOfAZs
         Subnet:

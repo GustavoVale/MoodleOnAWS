@@ -1,6 +1,42 @@
 ---
 AWSTemplateFormatVersion: 2010-09-09
-Description: Moodle database
+
+Description: Reference Architecture to host Moodle on AWS - Creates RDS Aurora MySQL or PostgreSQL database cluster
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+    - Label:
+        default: Database Parameters
+      Parameters:
+        - DatabaseType
+        - DatabaseInstanceType
+        # - DatabaseMasterUsername
+        # - DatabaseMasterPassword
+        - DatabaseName
+        - DatabaseCmk
+        - DatabaseSecurityGroup
+        - NumberOfSubnets
+        - Subnet
+    ParameterLabels:
+      DatabaseType:
+        default: Aurora database type
+      DatabaseCmk:
+        default: AWS KMS Customer Master Key (CMK) to encrypt DB 
+      DatabaseInstanceType:
+        default: DB Instance Class 
+      # DatabaseMasterUsername:
+      #   default: DB Master Username
+      # DatabaseMasterPassword:
+      #   default: DB Master Password
+      DatabaseName:
+        default: DB Name
+      DatabaseSecurityGroup:
+        default: DB Security Group
+      NumberOfSubnets:
+        default: Number of subnets
+      Subnet:
+        default: Subnets
 
 Parameters:
   DatabaseType:
@@ -8,7 +44,8 @@ Parameters:
       - MySQL
       - PostgreSQL
     Default: PostgreSQL
-    Description: Database engine to use.
+    Description: Indicates whether to use Aurora MySQL or PostgreSQL.
+    Type: String
     Type: String
   DatabaseCmk:
     Description: AWS KMS Customer Master Key (CMK) to encrypt database cluster
@@ -79,11 +116,26 @@ Parameters:
     Type: String
 
 Conditions:
-  UseMySQL: !Equals [!Ref DatabaseType, MySQL]
-  UsePostgreSQL: !Equals [!Ref DatabaseType, PostgreSQL]
-  NumberOfSubnets1: !Equals [ 1, !Ref NumberOfSubnets ]
-  NumberOfSubnets2: !Equals [ 2, !Ref NumberOfSubnets ]
-  UseAWS-ManagedCMK: !Equals ['', !Ref DatabaseCmk]
+  UseMySQL:
+    !Equals [!Ref DatabaseType, MySQL]
+  UsePostgreSQL:
+    !Equals [!Ref DatabaseType, PostgreSQL]
+  NumberOfSubnets1:
+      !Equals [ 1, !Ref NumberOfSubnets ]
+  NumberOfSubnets2:
+      !Equals [ 2, !Ref NumberOfSubnets ]
+  NumberOfSubnets3:
+      !Equals [ 3, !Ref NumberOfSubnets ]
+  Subnet0: !Or
+    - !Condition NumberOfSubnets1
+    - !Condition NumberOfSubnets2
+    - !Condition NumberOfSubnets3
+  Subnet1: !Or
+    - !Condition NumberOfSubnets2
+    - !Condition NumberOfSubnets3
+  Subnet2: !Condition NumberOfSubnets3
+  UseAWS-ManagedCMK:
+    !Equals ['', !Ref DatabaseCmk]
 
 Resources:
   DatabaseCluster:
@@ -92,48 +144,62 @@ Resources:
       BackupRetentionPeriod: 30
       DatabaseName: !Ref DatabaseName
       DBSubnetGroupName: !Ref DataSubnetGroup
-      PubliclyAccessible: false
-      Engine: !If [ UsePostgreSQL, aurora-postgresql, aurora-mysql ]
-      KmsKeyId: !If [ UseAWS-ManagedCMK, !Ref 'AWS::NoValue', !Ref DatabaseCmk ]
+      Engine:
+        !If [ UsePostgreSQL, aurora-postgresql, aurora-mysql ]
+      KmsKeyId:
+        !If [ UseAWS-ManagedCMK, !Ref 'AWS::NoValue', !Ref DatabaseCmk ]
       MasterUsername: !Join ['', ['{{resolve:secretsmanager:', !Ref RDSInstanceSecretArn, ':SecretString:username}}' ]]
       MasterUserPassword: !Join ['', ['{{resolve:secretsmanager:', !Ref RDSInstanceSecretArn, ':SecretString:password}}' ]]
-      Port: !If [ UsePostgreSQL, 5432, 3306 ]
+      Port:
+        !If [ UsePostgreSQL, 5432, 3306 ]
       StorageEncrypted: true
       VpcSecurityGroupIds:
       - !Ref DatabaseSecurityGroup
-
   DatabaseInstance0:
     Type: AWS::RDS::DBInstance
     DeletionPolicy: Delete
     Properties:
       AllowMajorVersionUpgrade: false
       AutoMinorVersionUpgrade: true
-      PubliclyAccessible: false
       DBClusterIdentifier: !Ref DatabaseCluster
       DBInstanceClass: !Ref DatabaseInstanceType
       DBSubnetGroupName: !Ref DataSubnetGroup
-      Engine: !If [ UsePostgreSQL, aurora-postgresql, aurora-mysql ]
-
+      Engine:
+        !If [ UsePostgreSQL, aurora-postgresql, aurora-mysql ]
+      Tags:
+        - Key: Name
+          Value: !Join [ '', [ 'Moodle / ', !Ref 'AWS::StackName' ] ]
   DatabaseInstance1:
     Type: AWS::RDS::DBInstance
     DeletionPolicy: Delete
     Properties:
       AllowMajorVersionUpgrade: false
       AutoMinorVersionUpgrade: true
-      PubliclyAccessible: false
       DBClusterIdentifier: !Ref DatabaseCluster
       DBInstanceClass: !Ref DatabaseInstanceType
       DBSubnetGroupName: !Ref DataSubnetGroup
-      Engine: !If [ UsePostgreSQL, aurora-postgresql, aurora-mysql ]
-
+      Engine:
+        !If [ UsePostgreSQL, aurora-postgresql, aurora-mysql ]
+      Tags:
+        - Key: Name
+          Value: !Join [ '', [ 'Moodle / ', !Ref 'AWS::StackName' ] ]
   DataSubnetGroup:
     Type: AWS::RDS::DBSubnetGroup
     Properties:
       DBSubnetGroupDescription: RDS Database Subnet Group for Moodle
-      SubnetIds: !If [ NumberOfSubnets1, [ !Select [ 0, !Ref Subnet ] ],
-        !If [ NumberOfSubnets2, [ !Select [ 0, !Ref Subnet ], !Select [ 1, !Ref Subnet ] ],
-        [ !Select [ 0, !Ref Subnet ], !Select [ 1, !Ref Subnet ], !Select [ 2, !Ref Subnet ] ] ] ]
-
+      SubnetIds:
+        !If
+          [ NumberOfSubnets1,
+          [ !Select [ 0, !Ref Subnet ] ],
+          !If
+            [ NumberOfSubnets2,
+            [ !Select [ 0, !Ref Subnet ], !Select [ 1, !Ref Subnet ] ],
+            [ !Select [ 0, !Ref Subnet ], !Select [ 1, !Ref Subnet ], !Select [ 2, !Ref Subnet ] ]
+            ]
+          ]
+      Tags:
+        - Key: Name
+          Value: !Join [ '', [ 'Moodle / ', !Ref 'AWS::StackName' ] ]
   DatabaseClusterParam:
     Type: AWS::SSM::Parameter
     Properties:
