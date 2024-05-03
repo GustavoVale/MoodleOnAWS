@@ -55,7 +55,6 @@ Parameters:
     Type: String
 
 Conditions:
-
   SslCertificate:
     !Not [!Equals [ '', !Ref PublicAlbAcmCertificate ] ]
   NoSslCertificate:
@@ -74,6 +73,20 @@ Conditions:
     - !Condition NumberOfSubnets2
     - !Condition NumberOfSubnets3
   Subnet2: !Condition NumberOfSubnets3
+
+Mappings: 
+  # https://docs.aws.amazon.com/elasticloadbalancing/latest/application/enable-access-logging.html
+  RegionMap: 
+    us-east-1: 
+      "ELBAccountID": "127311923021"
+    us-east-2: 
+      "ELBAccountID": "033677994240"
+    us-west-1: 
+      "ELBAccountID": "027434742980"
+    us-west-2: 
+      "ELBAccountID": "797873946194"
+    sa-east-1: 
+      "ELBAccountID": "507241528517"
 
 Resources:
   PublicAlbListenerNoSslCertificate:
@@ -184,26 +197,18 @@ Resources:
 
 Outputs:
   PublicAlbTargetGroupArn:
-    Value:
-      !Ref PublicAlbTargetGroup
+    Value: !Ref PublicAlbTargetGroup
   PublicAlbTargetGroupName:
-    Value:
-      !GetAtt PublicAlbTargetGroup.TargetGroupName
+    Value: !GetAtt PublicAlbTargetGroup.TargetGroupName
   PublicAlbCanonicalHostedZoneId:
-    Value:
-      !GetAtt PublicApplicationLoadBalancer.CanonicalHostedZoneID
+    Value: !GetAtt PublicApplicationLoadBalancer.CanonicalHostedZoneID
   PublicAlbDnsName:
-    Value:
-      !GetAtt PublicApplicationLoadBalancer.DNSName
+    Value: !GetAtt PublicApplicationLoadBalancer.DNSName
   PublicAlbFullName:
-    Value:
-      !GetAtt PublicApplicationLoadBalancer.LoadBalancerFullName
+    Value: !GetAtt PublicApplicationLoadBalancer.LoadBalancerFullName
   PublicAlbName:
-    Value:
-      !GetAtt PublicApplicationLoadBalancer.LoadBalancerName
+    Value: !GetAtt PublicApplicationLoadBalancer.LoadBalancerName
   PublicAlbHostname:
-    Value:
-      !If [ NoSslCertificate, !Join [ '', [ 'http://', !GetAtt PublicApplicationLoadBalancer.DNSName ] ], !Join [ '', [ 'https://', !GetAtt PublicApplicationLoadBalancer.DNSName ] ] ]
+    Value: !If [ NoSslCertificate, !Join [ '', [ 'http://', !GetAtt PublicApplicationLoadBalancer.DNSName ] ], !Join [ '', [ 'https://', !GetAtt PublicApplicationLoadBalancer.DNSName ] ] ]
   SslCertificate:
-    Value:
-      !If [ SslCertificate, True, False ]
+    Value: !If [ SslCertificate, True, False ]

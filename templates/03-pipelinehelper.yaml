@@ -222,7 +222,7 @@ Resources:
   CodeArtifactS3Bucket:
     Type: AWS::S3::Bucket
     DeletionPolicy: RetainExceptOnCreate
-        Properties:
+    Properties:
       PublicAccessBlockConfiguration:
         BlockPublicAcls: true
         BlockPublicPolicy: true
