@@ -26,7 +26,7 @@ Parameters:
     Description: Select existing subnets.
     Type: List<AWS::EC2::Subnet::Id>
 
-  InstanceType:
+  WebInstanceType:
     AllowedValues:
       - t3.nano 
       - t3.micro 
@@ -695,7 +695,7 @@ Resources:
         IamInstanceProfile: 
           Arn: !GetAtt InstanceProfile.Arn
         ImageId: !If [UsingGraviton2Ami, !Ref LatestArmAmiId, !Ref LatestAmiId]
-        InstanceType: !Ref InstanceType
+        InstanceType: !Ref WebInstanceType
         KeyName: !Ref EC2KeyName
         SecurityGroupIds: 
           - !Ref PipelineSecurityGroup

@@ -912,6 +912,8 @@ Resources:
           !Ref MoodleLocale
         ProjectName:
           !Sub '${AWS::StackName}'
+        WebInstanceType:
+          !Ref WebInstanceType
         WebAsgMax: 
           !Ref WebAsgMax
         WebAsgMin: 
