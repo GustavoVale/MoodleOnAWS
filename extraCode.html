@@ -1,0 +1,77 @@
+<style>
+
+    /* Menu principal */
+    .container-fluid .moremenu.navigation.observed ul li:nth-child(2).nav-item {
+        display: none;
+    }
+    
+    .container-fluid .moremenu.navigation.observed ul li:nth-child(1).nav-item {
+        text-indent: -9999px;
+        line-height: 0;
+    }
+
+    .container-fluid .moremenu.navigation.observed ul li:nth-child(1).nav-item a.nav-link:after {
+        content: "Meus Processos Seletivos";
+        text-indent: 0;
+        display: block;
+        line-height: initial;
+        font-weight: 700;
+        font-size: x-large;
+    }
+
+    /* Remoção do título de página */
+    div.page-header-headings h1 {
+        display: none !important;
+    }
+
+    /* Remoção dos títulos secundários */
+    #frontpage-available-course-list h2 {
+        display: none !important;
+    }
+
+    /* meus cursos */
+    #instance-5-header {
+        display: none !important;
+    }
+    
+    hr.mt-0 {
+        display: none !important;
+    }
+    
+    div.d-flex.align-items-center.my-2 {
+        display: none !important;
+    }
+
+    /* Remover menu de questionários */
+    .drawer-toggles.d-flex {
+        display: none !important;
+    }
+
+    .secondary-navigation.d-print-none {
+        display: none !important;
+    }
+
+    /* Muda texto para candidato iniciar prova */
+    #region-main-box .container-fluid.tertiary-navigation .btn.btn-primary {
+        text-indent: -9999px;
+        line-height: 0;
+    }
+
+    #region-main-box .container-fluid.tertiary-navigation .btn.btn-primary:after {
+        content: "Iniciar Prova";
+        text-indent: 0;
+        display: block;
+        line-height: initial;
+        font-weight: 600;
+        font-size: x-large;
+    }
+
+    /* Oculta item preferências */
+    .carousel-item.active :nth-child(1) {
+        display: none;
+    }
+
+    .carousel-item.active .dropdown-divider {
+        display: none;
+    }
+</style>
