@@ -1,10 +1,9 @@
 <style>
-
     /* Menu principal */
     .container-fluid .moremenu.navigation.observed ul li:nth-child(2).nav-item {
         display: none;
     }
-    
+
     .container-fluid .moremenu.navigation.observed ul li:nth-child(1).nav-item {
         text-indent: -9999px;
         line-height: 0;
@@ -25,19 +24,43 @@
     }
 
     /* Remoção dos títulos secundários */
-    #frontpage-available-course-list h2, #frontpage-course-list h2 {
+    #frontpage-available-course-list h2,
+    #frontpage-course-list h2 {
+        display: none !important;
+    }
+
+    /* Remoção dos menus no modo phone*/
+    .drawercontent.drag-container .list-group .list-group-item.list-group-item-action:nth-child(1) {
+        text-indent: -9999px;
+        line-height: 0;
+    }
+
+    .drawercontent.drag-container .list-group .list-group-item.list-group-item-action:nth-child(1):after {
+        content: "Meus Processos Seletivos";
+        text-indent: 0;
+        display: block;
+        line-height: initial;
+        font-weight: 500;
+        font-size: large;
+    }
+
+    .drawercontent.drag-container .list-group .list-group-item.list-group-item-action:nth-child(2) {
         display: none !important;
     } 
+
+    .courses>.paging.paging-morelink {
+        display: none !important;
+    }
 
     /* meus cursos */
     #instance-5-header {
         display: none !important;
     }
-    
+
     hr.mt-0 {
         display: none !important;
     }
-    
+
     div.d-flex.align-items-center.my-2 {
         display: none !important;
     }
