@@ -1,4 +1,41 @@
 <style>
+    /* Página de login */
+    div.login-form-username.mb-3::before {
+        content: "Login";
+        font-weight: bold;
+        padding-left: 6px;
+    }
+
+    div.login-form-username.mb-3::after {
+        content: " O nome de usuário é seu CPF com '.' e '-'. Por exemplo, 000.000.000-00";
+        padding-left: 6px;
+        color: rgb(40, 39, 39);
+    }
+
+    #username::placeholder {
+        color: white;
+    }
+
+    #login > div.login-form-password.mb-3::before {
+        content: "Senha";
+        font-weight: bold;
+        padding-left: 6px;
+    }
+
+    #password::placeholder {
+        color: white;
+    }
+
+    #login>div.login-form-forgotpassword.mb-3 {
+        display: none;
+    }
+
+    #login::after {
+        content: "Se houver dificuldades de acesso, ligue ou envie WhatsApp para 0800 283 2833";
+        font-weight: bold;
+        font-size: large;
+    }
+
     /* Menu principal */
     .container-fluid .moremenu.navigation.observed ul li:nth-child(2).nav-item {
         display: none;
@@ -29,6 +66,11 @@
         display: none !important;
     }
 
+    /* Remoção de nome do curso no card do curso*/
+    #frontpage-course-list>div>div.coursebox.clearfix.even.last h3 {
+        display: none !important;
+    }
+
     /* Remoção dos menus no modo phone*/
     .drawercontent.drag-container .list-group .list-group-item.list-group-item-action:nth-child(1) {
         text-indent: -9999px;
@@ -46,7 +88,7 @@
 
     .drawercontent.drag-container .list-group .list-group-item.list-group-item-action:nth-child(2) {
         display: none !important;
-    } 
+    }
 
     .courses>.paging.paging-morelink {
         display: none !important;
