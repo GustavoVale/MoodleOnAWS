@@ -38,14 +38,14 @@ Parameters:
       - Redis
       - Memcached
     Default: Memcached
-    Description: Indicates whether to use ElastiCache Memcached or Redis. 
+    Description: Cache engine to use.
     Type: String
   CacheUsageType:
     AllowedValues:
       - application
       - session
     Default: session
-    Description: Indicates whether to use ElastiCache for session or application caching. 
+    Description: Session or application caching.
     Type: String
   ElastiCacheClusterName:
     AllowedPattern: ^([a-zA-Z0-9]*)$
@@ -106,11 +106,11 @@ Parameters:
       - cache.r6gd.12xlarge
       - cache.r6gd.16xlarge
     ConstraintDescription: Must be a valid Amazon ElastiCache node type.
-    Default: cache.m6g.large
+    Default: cache.r6g.large
     Description: ElastiCache cluster node type.
     Type: String
   ElastiCacheSecurityGroup:
-    Description: Select the ElastiCache security group.
+    Description: ElastiCache Security Group.
     Type: AWS::EC2::SecurityGroup::Id
   NumberOfSubnets:
     AllowedValues:
@@ -130,24 +130,10 @@ Parameters:
     Type: String
 
 Conditions:
-  UseRedis:
-    !Equals [!Ref CacheEngineType, Redis]
-  UseMemcached:
-    !Equals [!Ref CacheEngineType, Memcached]
-  NumberOfSubnets1:
-      !Equals [ 1, !Ref NumberOfSubnets ]
-  NumberOfSubnets2:
-      !Equals [ 2, !Ref NumberOfSubnets ]
-  NumberOfSubnets3:
-      !Equals [ 3, !Ref NumberOfSubnets ]
-  Subnet0: !Or
-    - !Condition NumberOfSubnets1
-    - !Condition NumberOfSubnets2
-    - !Condition NumberOfSubnets3
-  Subnet1: !Or
-    - !Condition NumberOfSubnets2
-    - !Condition NumberOfSubnets3
-  Subnet2: !Condition NumberOfSubnets3
+  UseRedis: !Equals [!Ref CacheEngineType, Redis]
+  UseMemcached: !Equals [!Ref CacheEngineType, Memcached]
+  NumberOfSubnets1: !Equals [ 1, !Ref NumberOfSubnets ]
+  NumberOfSubnets2: !Equals [ 2, !Ref NumberOfSubnets ]
 
 Resources:
   ElastiCacheClusterRedis:
@@ -165,8 +151,7 @@ Resources:
       SecurityGroupIds:
         - !Ref ElastiCacheSecurityGroup
       Engine: redis
-      NumCacheClusters:
-        !Ref NumberOfSubnets
+      NumCacheClusters: !Ref NumberOfSubnets
 
   ElastiCacheClusterMemcached:
     Condition: UseMemcached
@@ -177,8 +162,7 @@ Resources:
       CacheSubnetGroupName: !Ref ElastiCacheSubnetGroup
       ClusterName: !Ref ElastiCacheClusterName
       Engine: memcached
-      NumCacheNodes:
-        !Ref NumberOfSubnets
+      NumCacheNodes: !Ref NumberOfSubnets
       Tags:
         - Key: Name
           Value: !Join [ '', [ 'Moodle / ', !Ref 'AWS::StackName' ] ]
@@ -190,16 +174,9 @@ Resources:
     Properties: 
       CacheSubnetGroupName: !Join [ '', [ !Ref ElastiCacheClusterName, SubnetGroup ] ]
       Description: ElastiCache Subnet Group for Moodle
-      SubnetIds: 
-        !If
-          [ NumberOfSubnets1,
-          [ !Select [ 0, !Ref Subnet ] ],
-          !If
-            [ NumberOfSubnets2,
-            [ !Select [ 0, !Ref Subnet ], !Select [ 1, !Ref Subnet ] ],
-            [ !Select [ 0, !Ref Subnet ], !Select [ 1, !Ref Subnet ], !Select [ 2, !Ref Subnet ] ]
-            ]
-          ]
+      SubnetIds: !If [ NumberOfSubnets1, [ !Select [ 0, !Ref Subnet ] ],
+        !If [ NumberOfSubnets2, [ !Select [ 0, !Ref Subnet ], !Select [ 1, !Ref Subnet ] ],
+        [ !Select [ 0, !Ref Subnet ], !Select [ 1, !Ref Subnet ], !Select [ 2, !Ref Subnet ] ] ] ]
 
   ElastiCacheClusterEndpoint:
     Type: AWS::SSM::Parameter
@@ -207,25 +184,19 @@ Resources:
       Name: !Join [ '', [ '/Moodle/',!Ref ProjectName, '/Cache/', !Ref CacheUsageType, '/ElastiCacheClusterEndpoint' ] ]
       Description: ElastiCache Cluster Endpoint
       Type: String
-      Value: !If [UseRedis, 
-                  !Join [ ':', [!GetAtt ElastiCacheClusterRedis.PrimaryEndPoint.Address, !GetAtt ElastiCacheClusterRedis.PrimaryEndPoint.Port]],
-                  !Join [ ':', [!GetAtt ElastiCacheClusterMemcached.ConfigurationEndpoint.Address, !GetAtt ElastiCacheClusterMemcached.ConfigurationEndpoint.Port]] 
-                 ]
-      Description: SSM Parameter for ElastiCache Cluster Endpoint
+      Value: !If [UseRedis, !Join [ ':', [!GetAtt ElastiCacheClusterRedis.PrimaryEndPoint.Address, !GetAtt ElastiCacheClusterRedis.PrimaryEndPoint.Port]],
+        !Join [ ':', [!GetAtt ElastiCacheClusterMemcached.ConfigurationEndpoint.Address, !GetAtt ElastiCacheClusterMemcached.ConfigurationEndpoint.Port]] ]
 
   ElastiCacheEngine:
     Type: AWS::SSM::Parameter
     Properties:
       Name: !Join [ '', [ '/Moodle/',!Ref ProjectName, '/Cache/', !Ref CacheUsageType, '/Engine' ] ]
-      Description: ElastiCache Cluster Endpoint
+      Description: !Sub ElastiCache Engine Type (${CacheUsageType})
       Type: String
       Value: !Ref CacheEngineType
-      Description: SSM Parameter for ElastiCache Engine Type
 
 Outputs:
   ElastiCacheClusterEndpointAddress:
-    Value: !If [UseRedis, 
-                  !Join [ ':', [!GetAtt ElastiCacheClusterRedis.PrimaryEndPoint.Address, !GetAtt ElastiCacheClusterRedis.PrimaryEndPoint.Port]],
-                  !Join [ ':', [!GetAtt ElastiCacheClusterMemcached.ConfigurationEndpoint.Address, !GetAtt ElastiCacheClusterMemcached.ConfigurationEndpoint.Port]] 
-                 ]
+    Value: !If [UseRedis, !Join [ ':', [!GetAtt ElastiCacheClusterRedis.PrimaryEndPoint.Address, !GetAtt ElastiCacheClusterRedis.PrimaryEndPoint.Port]],
+      !Join [ ':', [!GetAtt ElastiCacheClusterMemcached.ConfigurationEndpoint.Address, !GetAtt ElastiCacheClusterMemcached.ConfigurationEndpoint.Port]] ]
       

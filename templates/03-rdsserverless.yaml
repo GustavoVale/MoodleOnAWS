@@ -41,7 +41,7 @@ Parameters:
       - MySQL
       - PostgreSQL
     Default: PostgreSQL
-    Description: Indicates whether to use Aurora MySQL or PostgreSQL.
+    Description: Database engine to use.
     Type: String
   DatabaseCmk:
     Description: AWS KMS Customer Master Key (CMK) to encrypt database cluster
@@ -101,26 +101,11 @@ Parameters:
     Type: String
 
 Conditions:
-  UseMySQL:
-    !Equals [!Ref DatabaseType, MySQL]
-  UsePostgreSQL:
-    !Equals [!Ref DatabaseType, PostgreSQL]
-  NumberOfSubnets1:
-      !Equals [ 1, !Ref NumberOfSubnets ]
-  NumberOfSubnets2:
-      !Equals [ 2, !Ref NumberOfSubnets ]
-  NumberOfSubnets3:
-      !Equals [ 3, !Ref NumberOfSubnets ]
-  Subnet0: !Or
-    - !Condition NumberOfSubnets1
-    - !Condition NumberOfSubnets2
-    - !Condition NumberOfSubnets3
-  Subnet1: !Or
-    - !Condition NumberOfSubnets2
-    - !Condition NumberOfSubnets3
-  Subnet2: !Condition NumberOfSubnets3
-  UseAWS-ManagedCMK:
-    !Equals ['', !Ref DatabaseCmk]
+  UseMySQL: !Equals [!Ref DatabaseType, MySQL]
+  UsePostgreSQL: !Equals [!Ref DatabaseType, PostgreSQL]
+  NumberOfSubnets1: !Equals [ 1, !Ref NumberOfSubnets ]
+  NumberOfSubnets2: !Equals [ 2, !Ref NumberOfSubnets ]
+  UseAWS-ManagedCMK: !Equals ['', !Ref DatabaseCmk]
 
 Resources:
   DatabaseCluster:
@@ -129,14 +114,11 @@ Resources:
       BackupRetentionPeriod: 30
       DatabaseName: !Ref DatabaseName
       DBSubnetGroupName: !Ref DataSubnetGroup
-      Engine:
-        !If [ UsePostgreSQL, aurora-postgresql, aurora-mysql ]
-      KmsKeyId:
-        !If [ UseAWS-ManagedCMK, !Ref 'AWS::NoValue', !Ref DatabaseCmk ]
+      Engine: !If [ UsePostgreSQL, aurora-postgresql, aurora-mysql ]
+      Port: !If [ UsePostgreSQL, 5432, 3306 ]
+      KmsKeyId: !If [ UseAWS-ManagedCMK, !Ref 'AWS::NoValue', !Ref DatabaseCmk ]
       MasterUsername: !Join ['', ['{{resolve:secretsmanager:', !Ref RDSInstanceSecretArn, ':SecretString:username}}' ]]
       MasterUserPassword: !Join ['', ['{{resolve:secretsmanager:', !Ref RDSInstanceSecretArn, ':SecretString:password}}' ]]
-      Port:
-        !If [ UsePostgreSQL, 5432, 3306 ]
       StorageEncrypted: true
       VpcSecurityGroupIds:
       - !Ref DatabaseSecurityGroup
@@ -153,8 +135,8 @@ Resources:
       DBClusterIdentifier: !Ref DatabaseCluster
       DBInstanceClass: 'db.serverless'
       DBSubnetGroupName: !Ref DataSubnetGroup
-      Engine:
-        !If [ UsePostgreSQL, aurora-postgresql, aurora-mysql ]
+      Engine: !If [ UsePostgreSQL, aurora-postgresql, aurora-mysql ]
+      PubliclyAccessible: false
       Tags:
         - Key: Name
           Value: !Join [ '', [ 'Moodle / ', !Ref 'AWS::StackName' ] ]
@@ -163,19 +145,13 @@ Resources:
     Type: AWS::RDS::DBSubnetGroup
     Properties:
       DBSubnetGroupDescription: RDS Database Subnet Group for Moodle
-      SubnetIds:
-        !If
-          [ NumberOfSubnets1,
-          [ !Select [ 0, !Ref Subnet ] ],
-          !If
-            [ NumberOfSubnets2,
-            [ !Select [ 0, !Ref Subnet ], !Select [ 1, !Ref Subnet ] ],
-            [ !Select [ 0, !Ref Subnet ], !Select [ 1, !Ref Subnet ], !Select [ 2, !Ref Subnet ] ]
-            ]
-          ]
+      SubnetIds: !If [ NumberOfSubnets1, [ !Select [ 0, !Ref Subnet ] ],
+        !If [ NumberOfSubnets2, [ !Select [ 0, !Ref Subnet ], !Select [ 1, !Ref Subnet ] ],
+        [ !Select [ 0, !Ref Subnet ], !Select [ 1, !Ref Subnet ], !Select [ 2, !Ref Subnet ] ] ] ]
       Tags:
         - Key: Name
           Value: !Join [ '', [ 'Moodle / ', !Ref 'AWS::StackName' ] ]
+
 
   DatabaseClusterParam:
     Type: AWS::SSM::Parameter
@@ -190,7 +166,6 @@ Resources:
     Properties:
       Name: !Join [ '', [ '/Moodle/',!Ref ProjectName, '/DB/ClusterReadOnlyEndpoint' ] ]
       Type: String
-      # Aurora Serverless v1 does not support Read-only replicas
       Value: !GetAtt DatabaseCluster.ReadEndpoint.Address
       Description: Moodle DB Cluster Read only Endpoint
 

@@ -4,11 +4,6 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: This templates helps creating CodeCommit repo, S3 Bucket and update repo with Moodle code & configurations.
 
 Parameters:
-
-  EC2KeyName:
-    Description: Name of an existing EC2 key pair
-    Type: AWS::EC2::KeyPair::KeyName
-
   PipelineSecurityGroup:
     Description: Select the Pipeline security group Id
     Type: AWS::EC2::SecurityGroup::Id  
@@ -175,14 +170,12 @@ Parameters:
     Default: 1
     Description: Specifies the maximum number of EC2 instances in the Web Autoscaling Group.
     Type: String
-  
   WebAsgMin:
     AllowedPattern: ^([0-0]?[0-9]|10)$
     ConstraintDescription: Must be a number between 0 and 10.
     Default: 2
     Description: Specifies the minimum number of EC2 instances in the Web Autoscaling Group.
     Type: String
-  
   MoodleDirectDownloadURL:
     Default: "https://download.moodle.org/download.php/direct/stable404/moodle-4.4.tgz"
     Description: Specifies the TGZ Moodle direct download URL
@@ -344,9 +337,6 @@ Resources:
                   ApplicationStop:
                     - location: .pipeline/stop_application.sh
                       timeout: 300
-                  BeforeInstall:
-                    - location: .pipeline/before_install.sh
-                      timeout: 600
                   AfterInstall:
                     - location: .pipeline/after_install.sh
                       timeout: 300
@@ -574,14 +564,6 @@ Resources:
               mode: 000500
               owner: root
               group: root
-            /tmp/before_install.sh:
-              content:
-                !Sub |
-                  #!/bin/bash -xe
-                  echo "Nothing to do"
-              mode: 000500
-              owner: root
-              group: root
             /tmp/moodle-git-config.sh:
               content: !Sub |
                   #!/bin/bash -x
@@ -698,7 +680,6 @@ Resources:
           Arn: !GetAtt InstanceProfile.Arn
         ImageId: !If [UsingGraviton2Ami, !Ref LatestArmAmiId, !Ref LatestAmiId]
         InstanceType: !Ref WebInstanceType
-        KeyName: !Ref EC2KeyName
         SecurityGroupIds: 
           - !Ref PipelineSecurityGroup
         UserData:

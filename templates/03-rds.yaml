@@ -44,8 +44,7 @@ Parameters:
       - MySQL
       - PostgreSQL
     Default: PostgreSQL
-    Description: Indicates whether to use Aurora MySQL or PostgreSQL.
-    Type: String
+    Description: Database engine to use.
     Type: String
   DatabaseCmk:
     Description: AWS KMS Customer Master Key (CMK) to encrypt database cluster
@@ -116,26 +115,11 @@ Parameters:
     Type: String
 
 Conditions:
-  UseMySQL:
-    !Equals [!Ref DatabaseType, MySQL]
-  UsePostgreSQL:
-    !Equals [!Ref DatabaseType, PostgreSQL]
-  NumberOfSubnets1:
-      !Equals [ 1, !Ref NumberOfSubnets ]
-  NumberOfSubnets2:
-      !Equals [ 2, !Ref NumberOfSubnets ]
-  NumberOfSubnets3:
-      !Equals [ 3, !Ref NumberOfSubnets ]
-  Subnet0: !Or
-    - !Condition NumberOfSubnets1
-    - !Condition NumberOfSubnets2
-    - !Condition NumberOfSubnets3
-  Subnet1: !Or
-    - !Condition NumberOfSubnets2
-    - !Condition NumberOfSubnets3
-  Subnet2: !Condition NumberOfSubnets3
-  UseAWS-ManagedCMK:
-    !Equals ['', !Ref DatabaseCmk]
+  UseMySQL: !Equals [!Ref DatabaseType, MySQL]
+  UsePostgreSQL: !Equals [!Ref DatabaseType, PostgreSQL]
+  NumberOfSubnets1: !Equals [ 1, !Ref NumberOfSubnets ]
+  NumberOfSubnets2: !Equals [ 2, !Ref NumberOfSubnets ]
+  UseAWS-ManagedCMK: !Equals ['', !Ref DatabaseCmk]
 
 Resources:
   DatabaseCluster:
@@ -144,28 +128,27 @@ Resources:
       BackupRetentionPeriod: 30
       DatabaseName: !Ref DatabaseName
       DBSubnetGroupName: !Ref DataSubnetGroup
-      Engine:
-        !If [ UsePostgreSQL, aurora-postgresql, aurora-mysql ]
-      KmsKeyId:
-        !If [ UseAWS-ManagedCMK, !Ref 'AWS::NoValue', !Ref DatabaseCmk ]
+      PubliclyAccessible: false
+      Engine: !If [ UsePostgreSQL, aurora-postgresql, aurora-mysql ]
+      KmsKeyId: !If [ UseAWS-ManagedCMK, !Ref 'AWS::NoValue', !Ref DatabaseCmk ]
       MasterUsername: !Join ['', ['{{resolve:secretsmanager:', !Ref RDSInstanceSecretArn, ':SecretString:username}}' ]]
       MasterUserPassword: !Join ['', ['{{resolve:secretsmanager:', !Ref RDSInstanceSecretArn, ':SecretString:password}}' ]]
-      Port:
-        !If [ UsePostgreSQL, 5432, 3306 ]
+      Port: !If [ UsePostgreSQL, 5432, 3306 ]
       StorageEncrypted: true
       VpcSecurityGroupIds:
       - !Ref DatabaseSecurityGroup
+
   DatabaseInstance0:
     Type: AWS::RDS::DBInstance
     DeletionPolicy: Delete
     Properties:
       AllowMajorVersionUpgrade: false
       AutoMinorVersionUpgrade: true
+      PubliclyAccessible: true
       DBClusterIdentifier: !Ref DatabaseCluster
       DBInstanceClass: !Ref DatabaseInstanceType
       DBSubnetGroupName: !Ref DataSubnetGroup
-      Engine:
-        !If [ UsePostgreSQL, aurora-postgresql, aurora-mysql ]
+      Engine: !If [ UsePostgreSQL, aurora-postgresql, aurora-mysql ]
       Tags:
         - Key: Name
           Value: !Join [ '', [ 'Moodle / ', !Ref 'AWS::StackName' ] ]
@@ -175,11 +158,11 @@ Resources:
     Properties:
       AllowMajorVersionUpgrade: false
       AutoMinorVersionUpgrade: true
+      PubliclyAccessible: true
       DBClusterIdentifier: !Ref DatabaseCluster
       DBInstanceClass: !Ref DatabaseInstanceType
       DBSubnetGroupName: !Ref DataSubnetGroup
-      Engine:
-        !If [ UsePostgreSQL, aurora-postgresql, aurora-mysql ]
+      Engine: !If [ UsePostgreSQL, aurora-postgresql, aurora-mysql ]
       Tags:
         - Key: Name
           Value: !Join [ '', [ 'Moodle / ', !Ref 'AWS::StackName' ] ]
@@ -187,19 +170,10 @@ Resources:
     Type: AWS::RDS::DBSubnetGroup
     Properties:
       DBSubnetGroupDescription: RDS Database Subnet Group for Moodle
-      SubnetIds:
-        !If
-          [ NumberOfSubnets1,
-          [ !Select [ 0, !Ref Subnet ] ],
-          !If
-            [ NumberOfSubnets2,
-            [ !Select [ 0, !Ref Subnet ], !Select [ 1, !Ref Subnet ] ],
-            [ !Select [ 0, !Ref Subnet ], !Select [ 1, !Ref Subnet ], !Select [ 2, !Ref Subnet ] ]
-            ]
-          ]
-      Tags:
-        - Key: Name
-          Value: !Join [ '', [ 'Moodle / ', !Ref 'AWS::StackName' ] ]
+      SubnetIds: !If [ NumberOfSubnets1, [ !Select [ 0, !Ref Subnet ] ],
+        !If [ NumberOfSubnets2, [ !Select [ 0, !Ref Subnet ], !Select [ 1, !Ref Subnet ] ],
+        [ !Select [ 0, !Ref Subnet ], !Select [ 1, !Ref Subnet ], !Select [ 2, !Ref Subnet ] ] ] ]
+
   DatabaseClusterParam:
     Type: AWS::SSM::Parameter
     Properties:

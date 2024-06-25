@@ -1,7 +1,6 @@
 ---
 AWSTemplateFormatVersion: 2010-09-09
-
-Description: Reference Architecture to host Moodle on AWS - Creates New VPC
+Description: Moodle network (VPC)
 
 Metadata:
 
@@ -63,8 +62,7 @@ Parameters:
     - 2
     - 3
     Default: 2
-    Description: Number of Availability Zones to use in the VPC. This must match your
-      selections in the list of Availability Zones parameter.
+    Description: Number of Availability Zones to use in the VPC. This must match your selections in the list of Availability Zones parameter.
     Type: Number
   VpcCidr:
     AllowedPattern: "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/(1[6-9]|2[0-8]))$"
@@ -128,13 +126,9 @@ Parameters:
     Type: String
   
 Conditions:
-
-  NumberOfAZs1:
-      !Equals [ '1', !Ref NumberOfAZs ]
-  NumberOfAZs2:
-      !Equals [ '2', !Ref NumberOfAZs ]
-  NumberOfAZs3:
-      !Equals [ '3', !Ref NumberOfAZs ]
+  NumberOfAZs1: !Equals [ '1', !Ref NumberOfAZs ]
+  NumberOfAZs2: !Equals [ '2', !Ref NumberOfAZs ]
+  NumberOfAZs3: !Equals [ '3', !Ref NumberOfAZs ]
   AZ0: !Or
     - !Condition NumberOfAZs1
     - !Condition NumberOfAZs2
@@ -145,7 +139,6 @@ Conditions:
   AZ2: !Condition NumberOfAZs3
   
 Resources:
-
   AppSubnet0:
     Condition: AZ0
     Type: AWS::EC2::Subnet
@@ -159,6 +152,7 @@ Resources:
         - Key: SubnetType
           Value: Private
       VpcId: !Ref Vpc
+
   AppSubnet1:
     Condition: AZ1
     Type: AWS::EC2::Subnet
@@ -172,6 +166,7 @@ Resources:
         - Key: SubnetType
           Value: Private
       VpcId: !Ref Vpc
+
   AppSubnet2:
     Condition: AZ2
     Type: AWS::EC2::Subnet
@@ -192,12 +187,14 @@ Resources:
     Properties:
       RouteTableId: !Ref NatRouteTable0
       SubnetId: !Ref AppSubnet0
+
   AppSubnetRouteTableAssociation1:
     Condition: AZ1
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
       RouteTableId: !Ref NatRouteTable1
       SubnetId: !Ref AppSubnet1
+
   AppSubnetRouteTableAssociation2:
     Condition: AZ2
     Type: AWS::EC2::SubnetRouteTableAssociation
@@ -218,6 +215,7 @@ Resources:
         - Key: SubnetType
           Value: Private
       VpcId: !Ref Vpc
+
   DataSubnet1:
     Condition: AZ1
     Type: AWS::EC2::Subnet
@@ -231,6 +229,7 @@ Resources:
         - Key: SubnetType
           Value: Private
       VpcId: !Ref Vpc
+
   DataSubnet2:
     Condition: AZ2
     Type: AWS::EC2::Subnet
@@ -251,25 +250,28 @@ Resources:
     Properties:
       RouteTableId: !Ref NatRouteTable0
       SubnetId: !Ref DataSubnet0
+
   DataSubnetRouteTableAssociation1:
     Condition: AZ1
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
       RouteTableId: !Ref NatRouteTable1
       SubnetId: !Ref DataSubnet1
+
   DataSubnetRouteTableAssociation2:
     Condition: AZ2
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
       RouteTableId: !Ref NatRouteTable2
       SubnetId: !Ref DataSubnet2
- 
+
   InternetGateway:
     Type: AWS::EC2::InternetGateway
     Properties:
       Tags:
         - Key: Name
           Value: !Join [ '', [ 'InternetGateway / ', !Ref 'AWS::StackName' ] ]
+
   AttachInternetGateway:
     Type: AWS::EC2::VPCGatewayAttachment
     Properties:
@@ -281,6 +283,7 @@ Resources:
     Type: AWS::EC2::EIP
     Properties:
       Domain: vpc
+
   NatGateway0:
     Condition: AZ0
     Type: AWS::EC2::NatGateway
@@ -288,6 +291,7 @@ Resources:
     Properties:
       AllocationId: !GetAtt NatEIP0.AllocationId
       SubnetId: !Ref PublicSubnet0
+
   NatRoute0:
     Condition: AZ0
     Type: AWS::EC2::Route
@@ -295,6 +299,7 @@ Resources:
       RouteTableId: !Ref NatRouteTable0
       DestinationCidrBlock: 0.0.0.0/0
       NatGatewayId: !Ref NatGateway0
+
   NatRouteTable0:
     Condition: AZ0
     Type: AWS::EC2::RouteTable
@@ -311,6 +316,7 @@ Resources:
     Type: AWS::EC2::EIP
     Properties:
       Domain: vpc
+
   NatGateway1:
     Condition: AZ1
     Type: AWS::EC2::NatGateway
@@ -318,6 +324,7 @@ Resources:
     Properties:
       AllocationId: !GetAtt NatEIP1.AllocationId
       SubnetId: !Ref PublicSubnet1
+
   NatRoute1:
     Condition: AZ1
     Type: AWS::EC2::Route
@@ -325,6 +332,7 @@ Resources:
       RouteTableId: !Ref NatRouteTable1
       DestinationCidrBlock: 0.0.0.0/0
       NatGatewayId: !Ref NatGateway1
+
   NatRouteTable1:
     Condition: AZ1
     Type: AWS::EC2::RouteTable
@@ -341,6 +349,7 @@ Resources:
     Type: AWS::EC2::EIP
     Properties:
       Domain: vpc
+
   NatGateway2:
     Condition: AZ2
     Type: AWS::EC2::NatGateway
@@ -348,6 +357,7 @@ Resources:
     Properties:
       AllocationId: !GetAtt NatEIP2.AllocationId
       SubnetId: !Ref PublicSubnet2
+
   NatRoute2:
     Condition: AZ2
     Type: AWS::EC2::Route
@@ -355,6 +365,7 @@ Resources:
       RouteTableId: !Ref NatRouteTable2
       DestinationCidrBlock: 0.0.0.0/0
       NatGatewayId: !Ref NatGateway2
+
   NatRouteTable2:
     Condition: AZ2
     Type: AWS::EC2::RouteTable
@@ -373,6 +384,7 @@ Resources:
       RouteTableId: !Ref PublicRouteTable
       DestinationCidrBlock: 0.0.0.0/0
       GatewayId: !Ref InternetGateway
+
   PublicRouteTable:
     Type: AWS::EC2::RouteTable
     Properties:
@@ -382,25 +394,28 @@ Resources:
         - Key: Network
           Value: Public
       VpcId: !Ref Vpc
+
   PublicRouteTableAssociation0:
     Condition: AZ0
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
       SubnetId: !Ref PublicSubnet0
       RouteTableId: !Ref PublicRouteTable
+
   PublicRouteTableAssociation1:
     Condition: AZ1
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
       SubnetId: !Ref PublicSubnet1
       RouteTableId: !Ref PublicRouteTable
+
   PublicRouteTableAssociation2:
     Condition: AZ2
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
       SubnetId: !Ref PublicSubnet2
       RouteTableId: !Ref PublicRouteTable
-  
+
   PublicSubnet0:
     Condition: AZ0
     Type: AWS::EC2::Subnet
@@ -414,6 +429,7 @@ Resources:
         - Key: SubnetType
           Value: Public
       VpcId: !Ref Vpc
+
   PublicSubnet1:
     Condition: AZ1
     Type: AWS::EC2::Subnet
@@ -427,6 +443,7 @@ Resources:
         - Key: SubnetType
           Value: Public
       VpcId: !Ref Vpc
+
   PublicSubnet2:
     Condition: AZ2
     Type: AWS::EC2::Subnet
@@ -440,7 +457,7 @@ Resources:
         - Key: SubnetType
           Value: Public
       VpcId: !Ref Vpc
-  
+
   Vpc:
     Type: AWS::EC2::VPC
     Properties:
@@ -450,6 +467,7 @@ Resources:
       Tags:
         - Key: Name
           Value: !Join [ '', [ 'Vpc / ', !Ref 'AWS::StackName' ] ]
+
   VpcFlowLog:
     Type: AWS::EC2::FlowLog
     Properties:
@@ -458,6 +476,7 @@ Resources:
       ResourceId: !Ref Vpc
       ResourceType: VPC
       TrafficType: ALL
+
   VpcFlowLogsRole:
     Type: AWS::IAM::Role
     Properties:
@@ -477,16 +496,20 @@ Resources:
             Version: 2012-10-17
             Statement:
               - Action:
-                  - logs:CreateLogGroup
                   - logs:CreateLogStream
                   - logs:DescribeLogGroups
                   - logs:DescribeLogStreams
                   - logs:PutLogEvents
                 Effect: Allow
-                Resource: '*'
+                Resource: !GetAtt VpcFlowLogsGroup.Arn
+
+  VpcFlowLogsGroup: 
+      Type: AWS::Logs::LogGroup
+      DeletionPolicy: Delete
+      Properties: 
+        RetentionInDays: 7
 
 Outputs:
-  
   Vpc:
     Value: !Ref Vpc
   VpcCidr:

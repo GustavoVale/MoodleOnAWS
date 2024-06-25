@@ -55,24 +55,10 @@ Parameters:
     Type: String
 
 Conditions:
-  SslCertificate:
-    !Not [!Equals [ '', !Ref PublicAlbAcmCertificate ] ]
-  NoSslCertificate:
-    !Equals [ '', !Ref PublicAlbAcmCertificate ]
-  NumberOfSubnets1:
-      !Equals [ 1, !Ref NumberOfSubnets ]
-  NumberOfSubnets2:
-      !Equals [ 2, !Ref NumberOfSubnets ]
-  NumberOfSubnets3:
-      !Equals [ 3, !Ref NumberOfSubnets ]
-  Subnet0: !Or
-    - !Condition NumberOfSubnets1
-    - !Condition NumberOfSubnets2
-    - !Condition NumberOfSubnets3
-  Subnet1: !Or
-    - !Condition NumberOfSubnets2
-    - !Condition NumberOfSubnets3
-  Subnet2: !Condition NumberOfSubnets3
+  SslCertificate: !Not [!Equals [ '', !Ref PublicAlbAcmCertificate ] ]
+  NoSslCertificate: !Equals [ '', !Ref PublicAlbAcmCertificate ]
+  NumberOfSubnets1: !Equals [ 1, !Ref NumberOfSubnets ]
+  NumberOfSubnets2: !Equals [ 2, !Ref NumberOfSubnets ]
 
 Mappings: 
   # https://docs.aws.amazon.com/elasticloadbalancing/latest/application/enable-access-logging.html
@@ -91,6 +77,7 @@ Mappings:
 Resources:
   PublicAlbListenerNoSslCertificate:
     Type : AWS::ElasticLoadBalancingV2::Listener
+    DependsOn: LoadBalancerAccessLogsBucketPolicy
     Properties:
       DefaultActions:
       - Type: forward
@@ -102,6 +89,7 @@ Resources:
   PublicAlbListenerSslCertificate:
     Condition: SslCertificate
     Type : AWS::ElasticLoadBalancingV2::Listener
+    DependsOn: LoadBalancerAccessLogsBucketPolicy
     Properties:
       Certificates:
       - CertificateArn: !Ref PublicAlbAcmCertificate
@@ -156,16 +144,9 @@ Resources:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties:
       Scheme: internet-facing
-      Subnets:
-        !If
-          [ NumberOfSubnets1,
-          [ !Select [ 0, !Ref Subnet ] ],
-          !If
-            [ NumberOfSubnets2,
-            [ !Select [ 0, !Ref Subnet ], !Select [ 1, !Ref Subnet ] ],
-            [ !Select [ 0, !Ref Subnet ], !Select [ 1, !Ref Subnet ], !Select [ 2, !Ref Subnet ] ]
-            ]
-          ]
+      Subnets: !If [ NumberOfSubnets1, [ !Select [ 0, !Ref Subnet ] ],
+        !If [ NumberOfSubnets2, [ !Select [ 0, !Ref Subnet ], !Select [ 1, !Ref Subnet ] ],
+        [ !Select [ 0, !Ref Subnet ], !Select [ 1, !Ref Subnet ], !Select [ 2, !Ref Subnet ] ] ] ]
       LoadBalancerAttributes:
       - Key: idle_timeout.timeout_seconds
         Value: '60'

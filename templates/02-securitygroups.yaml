@@ -32,7 +32,7 @@ Parameters:
       - MySQL
       - PostgreSQL
     Default: PostgreSQL
-    Description: Indicates whether to use Aurora MySQL or PostgreSQL.
+    Description: Database engine to use.
     Type: String
   ElastiCacheType:
     AllowedValues:
@@ -47,6 +47,7 @@ Conditions:
     !Equals [!Ref DatabaseType, PostgreSQL]  
   UseRedis:
     !Equals [!Ref ElastiCacheType, Redis]
+
 Resources:
   DatabaseSecurityGroup:
     Type: AWS::EC2::SecurityGroup
@@ -62,8 +63,7 @@ Resources:
       - IpProtocol: -1
         Description: "Block all egress"
         CidrIp: 127.0.0.1/32
-      VpcId:
-        !Ref Vpc
+      VpcId: !Ref Vpc
 
   ElastiCacheSecurityGroup:
     Type: AWS::EC2::SecurityGroup
@@ -79,14 +79,14 @@ Resources:
         - IpProtocol: -1
           Description: "Block all egress"
           CidrIp: 127.0.0.1/32
-      VpcId:
-        !Ref Vpc
+      VpcId: !Ref Vpc
+
   EfsSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: EFS Security Group
-      VpcId: !Ref Vpc
-      SecurityGroupIngress:
+       VpcId: !Ref Vpc
+       SecurityGroupIngress:
         - IpProtocol: tcp
           Description: "Allow NFS access from instances in the Web Security Group"
           FromPort: 2049
@@ -127,8 +127,8 @@ Resources:
         - IpProtocol: -1
           Description: "Block all egress"
           CidrIp: 127.0.0.1/32
-      VpcId:
-        !Ref Vpc
+      VpcId: !Ref Vpc       
+
   PublicAlbSecurityGroupEgressHttp:
     Type: AWS::EC2::SecurityGroupEgress
     Properties:
@@ -168,8 +168,7 @@ Resources:
         - IpProtocol: "-1"
           Description: "Allow outgoing access from web instances to Internet (download packages, updates)"
           CidrIp: 0.0.0.0/0
-      VpcId:
-        !Ref Vpc
+      VpcId: !Ref Vpc
 
 Outputs:
   DatabaseSecurityGroup:
