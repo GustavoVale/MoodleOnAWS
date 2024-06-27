@@ -22,7 +22,7 @@ Parameters:
   WebAsgMax:
     AllowedPattern: ^((?!0$)[1-2]?[0-9]|30)$
     ConstraintDescription: Must be a number between 1 and 30.
-    Default: 1
+    Default: 10
     Description: Specifies the maximum number of EC2 instances in the Web Autoscaling Group.
     Type: String
   WebAsgMin:
@@ -250,7 +250,7 @@ Resources:
     Type: AWS::AutoScaling::AutoScalingGroup
     Properties:
       Cooldown: '60'
-      HealthCheckGracePeriod: 120
+      HealthCheckGracePeriod: 1200
       HealthCheckType: ELB
       LaunchTemplate:
         LaunchTemplateId: !Ref WebLaunchTemplate

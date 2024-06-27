@@ -147,7 +147,7 @@ Parameters:
   MoodleLocale:
     Description: "The main language of the Moodle site, during initial configuration."
     Type: String
-    Default: en
+    Default: pt_br
   
   DomainName:
     Description: '[ Optional ] The main domain name of the Moodle site (e.g. moodle.example.edu).'
@@ -167,7 +167,7 @@ Parameters:
   WebAsgMax:
     AllowedPattern: ^((?!0$)[1-2]?[0-9]|30)$
     ConstraintDescription: Must be a number between 1 and 30.
-    Default: 1
+    Default: 10
     Description: Specifies the maximum number of EC2 instances in the Web Autoscaling Group.
     Type: String
   WebAsgMin:
@@ -292,7 +292,7 @@ Resources:
       LaunchTemplate:
         LaunchTemplateId: !Ref PipelineHelperLaunchTemplate
         Version: !GetAtt PipelineHelperLaunchTemplate.LatestVersionNumber
-      MaxSize: 1
+      MaxSize: 10
       MinSize: 0
       DesiredCapacity: 1
       Tags:

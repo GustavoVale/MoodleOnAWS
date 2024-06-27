@@ -187,8 +187,8 @@ Resources:
       LaunchTemplate:
         LaunchTemplateId: !Ref BastionLaunchTemplate
         Version: !GetAtt BastionLaunchTemplate.LatestVersionNumber
-      MaxSize: 1
-      MinSize: 0
+      MaxSize: 10
+      MinSize: 1
       Tags:
         - Key: Name
           Value: !Join [ '', [ 'Bastion / ', !Ref 'AWS::StackName' ] ]

@@ -203,7 +203,7 @@ Resources:
       HealthCheckGracePeriod: 120
       HealthCheckType: EC2
       LaunchConfigurationName: !Ref LaunchConfiguration
-      MaxSize: 1
+      MaxSize: 10
       MinSize: 0
       DesiredCapacity: 1
       Tags:
@@ -354,8 +354,8 @@ Resources:
                     "#!/bin/bash -x\n",
                     "\n",
                     "FILE_SYSTEM_ID=$1\n",
-                    "WARNING_THRESHOLD_MINUTES=$2\n",
-                    "CRITICAL_THRESHOLD_MINUTES=$3\n",
+                    "WARNING_THRESHOLD_MINUTES=$1\n",
+                    "CRITICAL_THRESHOLD_MINUTES=$2\n",
                     "SNS_ARN=$4\n",
                     "\n",
                     "error=0\n",

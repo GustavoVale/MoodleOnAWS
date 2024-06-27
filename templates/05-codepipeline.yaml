@@ -14,7 +14,7 @@ Parameters:
     Type: "String"
     Default: "main"
     Description: Repository's branch name
-  AppAutoScalingGroupName:
+  WebAutoScalingGroupName:
     Type: "String"
     Description: Name of Autoscaling group for Moodle Web app.
   MoodleAppTargetGroupName:
@@ -76,7 +76,7 @@ Resources:
         DeploymentOption: BLUE_GREEN #IN_PLACE
         DeploymentOption: WITH_TRAFFIC_CONTROL #WITHOUT_TRAFFIC_CONTROL
       AutoScalingGroups: 
-        - !Ref AppAutoScalingGroupName
+        - !Ref WebAutoScalingGroupName
       LoadBalancerInfo:
         TargetGroupInfoList: 
           - Name: !Ref MoodleAppTargetGroupName
@@ -86,7 +86,7 @@ Resources:
     Properties:
       Name: !Sub '/Moodle/${ProjectName}/WebAppASGName'
       Type: String
-      Value: !Ref AppAutoScalingGroupName
+      Value: !Ref WebAutoScalingGroupName
       Description: SSM Parameter for Moodle WebApp Auto scaling group
 
   #This role is for Moodle pipeline to perform ci-cd tasks.

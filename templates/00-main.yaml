@@ -417,7 +417,7 @@ Parameters:
   WebAsgMax:
     AllowedPattern: ^((?!0$)[1-2]?[0-9]|30)$
     ConstraintDescription: Must be a number between 1 and 30.
-    Default: 1
+    Default: 10
     Description: Specifies the maximum number of EC2 instances in the Web Autoscaling Group.
     Type: String
   WebAsgMin:
@@ -979,7 +979,7 @@ Resources:
         CodeCommitRepoArn: 
           !GetAtt [ pipelineHelper, Outputs.MoodleRepoArn ]
         BranchName: 'main'
-        AppAutoScalingGroupName:
+        WebAutoScalingGroupName:
           !GetAtt [ webapp, Outputs.WebAutoScalingGroupName ]
         MoodleAppTargetGroupName:
           !GetAtt [ publicalb, Outputs.PublicAlbTargetGroupName ]
@@ -1002,7 +1002,7 @@ Resources:
         CodeCommitRepoArn: 
           !GetAtt [ pipelineHelper, Outputs.MoodleRepoArn ]
         BranchName: 'main'
-        AppAutoScalingGroupName:
+        WebAutoScalingGroupName:
           !GetAtt [ webapp, Outputs.WebAutoScalingGroupName ]
         MoodleAppTargetGroupName:
           !GetAtt [ publicalb, Outputs.PublicAlbTargetGroupName ]
