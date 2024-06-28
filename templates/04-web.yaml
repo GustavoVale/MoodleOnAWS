@@ -250,7 +250,7 @@ Resources:
     Type: AWS::AutoScaling::AutoScalingGroup
     Properties:
       Cooldown: '60'
-      HealthCheckGracePeriod: 1200
+      HealthCheckGracePeriod: 120
       HealthCheckType: ELB
       LaunchTemplate:
         LaunchTemplateId: !Ref WebLaunchTemplate
