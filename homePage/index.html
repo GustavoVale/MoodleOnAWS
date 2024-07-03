@@ -4,7 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/x-icon" href="https://portal.unilavras.edu.br/img/logoindex.png">
+    <link rel="icon" type="image/x-icon" href="https://portal.unilavras.edu.br/img/logoindex.png"> 
+    <!-- Bootstrap Font Icon CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css" />
     <title>Processo Seletivo</title>
     <style>
         body {
@@ -29,7 +31,6 @@
         .form-field {
             margin-bottom: 1.5em;
             text-align: left;
-
         }
 
         .form-field label {
@@ -38,7 +39,6 @@
             font-family: 'Verdana';
             color: #3e3e3e;
             font-weight: bolder;
-
         }
 
         .form-field input {
@@ -47,7 +47,6 @@
             border: 1px solid #ccc;
             border-radius: 8px;
             margin: 8px 0;
-
         }
 
         .form-field input[type="submit"] {
@@ -71,6 +70,29 @@
             display: none;
         }
 
+        .error-code-message {
+            color: red;
+            display: none;
+        }
+
+        .password-container {
+            position: relative;
+            width: calc(100% - 22px);
+        }
+
+        .password-container input {
+            width: 100%;
+            padding-right: 40px;
+        }
+
+        .toggle-password {
+            position: absolute;
+            top: 50%;
+            right: -15%;
+            transform: translateY(-50%);
+            cursor: pointer;
+        }
+
         .img-container {
             text-align: center;
         }
@@ -84,20 +106,30 @@
 
 <body>
     <div class="form-container">
-        <form id="login-form"
-            action="http://psfila-publi-nm7ue7bsswxk-338575592.us-east-1.elb.amazonaws.com/login/index.php"
-            method="POST">
+        <form id="login-form" action="https://ps2.unilavras.edu.br/login/index.php" method="POST">
             <div class="img-container">
                 <img src="https://portal.unilavras.edu.br/img/logoindex.png" width="120px" height="auto">
                 <div class="form-field">
-                    <label for="cpf">CPF:</label>
-                    <input type="text" id="cpf" maxlength="14 name=" cpf" placeholder="000.000.000-00" required>
+                    <label for="username">CPF:</label>
+                    <input type="text" id="username" maxlength="14" name="username" placeholder="000.000.000-00"
+                        required>
                     <span class="error-message" id="cpf-error">CPF inválido ou incompleto.</span>
                 </div>
-                <div class="form-field">
+                <div class="form-field" style="width: 324px;">
                     <label for="password">Senha:</label>
-                    <input type="password" id="password" name="password" placeholder="********" required>
+                    <div class="password-container">
+                        <input type="password" id="password" name="password" placeholder="********" required>
+                        <span class="toggle-password" onclick="togglePasswordVisibility()">
+                            <i class="bi-eye-slash"></i>
+                        </span>
+                    </div>
                 </div>
+
+                <div class="form-field">
+                    <span class="error-code-message" id="error-code-message"><b>Erro: Não foi possível acessar sua
+                            conta. Senha não confere. Tente novamente.</b></span>
+                </div>
+
                 <div class="form-field">
                     <input type="submit" value="Acessar">
                 </div>
@@ -149,21 +181,41 @@
             return true;
         }
 
-        document.getElementById('cpf').addEventListener('input', function (e) {
+        document.getElementById('username').addEventListener('input', function (e) {
             e.target.value = formatCPF(e.target.value);
         });
 
         document.getElementById('login-form').addEventListener('submit', function (e) {
-            const cpf = document.getElementById('cpf').value;
+            const username = document.getElementById('username').value;
             const errorMessage = document.getElementById('cpf-error');
-
-            if (!isValidCPF(cpf)) {
+            
+            if (!isValidCPF(username)) {
                 e.preventDefault();
                 errorMessage.style.display = 'block';
             } else {
                 errorMessage.style.display = 'none';
             }
         });
+
+        function togglePasswordVisibility() {
+                const passwordField = document.getElementById('password');
+                const passwordIcon = document.querySelector('.toggle-password');
+                if (passwordField.type === 'password') {
+                    passwordField.type = 'text';
+                    passwordIcon.innerHTML = '<i class="bi-eye"></i>';
+                } else {
+                    passwordField.type = 'password';
+                    passwordIcon.innerHTML = '<i class="bi-eye-slash"></i>';
+                }
+            }
+
+        window.onload = function () {
+            const urlParams = new URLSearchParams(window.location.search);
+            const errorCode = urlParams.get('errorcode');
+            if (errorCode === '3') {
+                document.getElementById('error-code-message').style.display = 'block';
+            }
+        }
     </script>
 </body>
 
